@@ -32,6 +32,7 @@ WORKDIR /app
 
 # 从 builder 复制编译好的二进制文件
 COPY --from=builder /app/wecom-notifier .
+COPY --from=builder /app/templates .
 
 # 创建日志目录
 RUN mkdir -p /app/logs
