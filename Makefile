@@ -1,8 +1,9 @@
-.PHONY: help build run dev test clean docker-build docker-run docker-stop deps
+.PHONY: help build run dev test clean docker-build docker-run docker-stop deps init
 
 # 默认目标
 help:
 	@echo "可用的命令:"
+	@echo "  make init         - 初始化项目结构"
 	@echo "  make deps         - 下载依赖"
 	@echo "  make build        - 编译程序"
 	@echo "  make run          - 运行程序"
@@ -12,6 +13,15 @@ help:
 	@echo "  make docker-build - 构建 Docker 镜像"
 	@echo "  make docker-run   - 运行 Docker 容器"
 	@echo "  make docker-stop  - 停止 Docker 容器"
+
+# 初始化项目结构
+init:
+	@echo "初始化项目结构..."
+	@mkdir -p templates/static/css
+	@mkdir -p templates/static/js
+	@mkdir -p logs
+	@if [ ! -f .env ]; then cp .env.example .env && echo "已创建 .env 文件，请编辑配置"; fi
+	@echo "项目结构初始化完成"
 
 # 下载依赖
 deps:

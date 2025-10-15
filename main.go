@@ -2,13 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/gin-gonic/gin"
-	"github.com/gookit/slog"
 	"github.com/gookit/slog/handler"
-	"github.com/joho/godotenv"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -16,11 +14,11 @@ import (
 	"strconv"
 	"sync"
 	"time"
-)
 
-import (
-	"context"
-	"encoding/json"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/gin-gonic/gin"
+	"github.com/gookit/slog"
+	"github.com/joho/godotenv"
 )
 
 // WeComConfig 企业微信配置
