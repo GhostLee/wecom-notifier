@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  wecom-notifier:
+    build: .
+    container_name: wecom-notifier
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - WECOM_CORP_ID=${WECOM_CORP_ID}
+      - WECOM_AGENT_ID=${WECOM_AGENT_ID}
+      - WECOM_SECRET=${WECOM_SECRET}
+      - WECOM_TO_USER=${WECOM_TO_USER:-@all}
+      - API_KEY=${API_KEY}
+      - PORT=8080
+      - GIN_MODE=release
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_DIR=/app/logs
+      - LOG_MAX_AGE_DAYS=${LOG_MAX_AGE_DAYS:-30}
+      - LOG_ROTATE=true
+      - MQTT_BROKER=${MQTT_BROKER}
+      - MQTT_CLIENT_ID=${MQTT_CLIENT_ID:-wecom-notifier}
+      - MQTT_TOPIC=${MQTT_TOPIC:-wecom/notify}
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - wecom-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health?api_key=${API_KEY}"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # 可选：MQTT Broker (如果需要 MQTT 功能)
+  # mosquitto:
+  #   image: eclipse-mosquitto:2
+  #   container_name: mosquitto
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1883:1883"
+  #     - "9001:9001"
+  #   volumes:
+  #     - ./mosquitto/config:/mosquitto/config
+  #     - ./mosquitto/data:/mosquitto/data
+  #     - ./mosquitto/log:/mosquitto/log
+  #   networks:
+  #     - wecom-network
+
+networks:
+  wecom-network:
+    driver: bridge

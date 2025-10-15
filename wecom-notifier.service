@@ -1,0 +1,26 @@
+[Unit]
+Description=WeCom Notifier Service
+After=network.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+WorkingDirectory=/opt/wecom-notifier
+EnvironmentFile=/opt/wecom-notifier/.env
+ExecStart=/opt/wecom-notifier/wecom-notifier
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wecom-notifier
+
+# 安全加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/wecom-notifier/logs
+
+[Install]
+WantedBy=multi-user.target
