@@ -524,10 +524,13 @@ func main() {
 
 	r := gin.Default()
 
+	// 加载静态资源
+	r.Static("/static", "./templates/static")
+	r.LoadHTMLGlob("templates/*.html")
+
 	// 首页 - 测试页面
 	r.GET("/", func(c *gin.Context) {
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, getTestPageHTML())
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
 	// API 路由组
@@ -617,166 +620,4 @@ func main() {
 	if err := r.Run(":" + port); err != nil {
 		slog.Fatalf("Failed to start server: %v", err)
 	}
-}
-
-func getTestPageHTML() string {
-	return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>企业微信通知测试</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
-        .header h1 { font-size: 28px; margin-bottom: 8px; }
-        .header p { opacity: 0.9; font-size: 14px; }
-        .content { padding: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 14px; }
-        input, textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
-        input:focus, textarea:focus { outline: none; border-color: #667eea; }
-        textarea { min-height: 120px; resize: vertical; font-family: inherit; }
-        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
-        button { padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .btn-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .btn-image { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-        .btn-markdown { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-        button:active { transform: translateY(0); }
-        .result { margin-top: 24px; padding: 16px; border-radius: 8px; display: none; }
-        .result.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .result.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
-        .file-input-wrapper input[type=file] { position: absolute; left: -9999px; }
-        .file-input-label { display: block; padding: 12px; background: #f8f9fa; border: 2px dashed #667eea; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
-        .file-input-label:hover { background: #e9ecef; border-color: #764ba2; }
-        .preview { margin-top: 12px; max-width: 200px; border-radius: 8px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📱 企业微信通知测试</h1>
-            <p>测试发送文本、图片和 Markdown 消息</p>
-        </div>
-        <div class="content">
-            <div class="form-group">
-                <label>API Key</label>
-                <input type="password" id="apiKey" placeholder="请输入 API Key">
-            </div>
-            <div class="form-group">
-                <label>接收人 (可选，默认 @all)</label>
-                <input type="text" id="toUser" placeholder="@all">
-            </div>
-            <div class="form-group">
-                <label>消息内容</label>
-                <textarea id="content" placeholder="输入文本消息或 Markdown 内容"></textarea>
-            </div>
-            <div class="form-group">
-                <label>图片 (用于图片消息)</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="imageFile" accept="image/*">
-                    <label for="imageFile" class="file-input-label">点击选择图片</label>
-                </div>
-                <img id="imagePreview" class="preview" style="display:none;">
-            </div>
-            <div class="btn-group">
-                <button class="btn-text" onclick="sendMessage('text')">发送文本</button>
-                <button class="btn-image" onclick="sendMessage('image')">发送图片</button>
-                <button class="btn-markdown" onclick="sendMessage('markdown')">发送 Markdown</button>
-            </div>
-            <div id="result" class="result"></div>
-        </div>
-    </div>
-
-    <script>
-        let base64Image = '';
-        
-        document.getElementById('imageFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    base64Image = e.target.result.split(',')[1];
-                    document.getElementById('imagePreview').src = e.target.result;
-                    document.getElementById('imagePreview').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        async function sendMessage(type) {
-            const apiKey = document.getElementById('apiKey').value;
-            const toUser = document.getElementById('toUser').value;
-            const content = document.getElementById('content').value;
-            const resultDiv = document.getElementById('result');
-
-            if (!apiKey) {
-                showResult('请输入 API Key', false);
-                return;
-            }
-
-            let endpoint = '';
-            let body = { touser: toUser || '@all' };
-
-            if (type === 'text') {
-                if (!content) {
-                    showResult('请输入文本内容', false);
-                    return;
-                }
-                endpoint = '/api/send/text';
-                body.text = content;
-            } else if (type === 'image') {
-                if (!base64Image) {
-                    showResult('请选择图片', false);
-                    return;
-                }
-                endpoint = '/api/send/image';
-                body.image = base64Image;
-            } else if (type === 'markdown') {
-                if (!content) {
-                    showResult('请输入 Markdown 内容', false);
-                    return;
-                }
-                endpoint = '/api/send/markdown';
-                body.markdown = content;
-            }
-
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': apiKey
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    showResult('消息发送成功！', true);
-                } else {
-                    showResult('发送失败: ' + (data.error || JSON.stringify(data)), false);
-                }
-            } catch (error) {
-                showResult('请求失败: ' + error.message, false);
-            }
-        }
-
-        function showResult(message, success) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.textContent = message;
-            resultDiv.className = 'result ' + (success ? 'success' : 'error');
-            resultDiv.style.display = 'block';
-            setTimeout(() => {
-                resultDiv.style.display = 'none';
-            }, 5000);
-        }
-    </script>
-</body>
-</html>`
 }
